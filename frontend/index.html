@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TaskFlow Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* Keep dashboard hidden until JWT authentication is verified */
+        body {
+            visibility: hidden;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =====================================================
+         AUTHENTICATION CHECK
+         ===================================================== -->
+
+    <script src="auth.js"></script>
+
+    <script>
+        (async function () {
+
+            const authenticated = await checkAuthentication();
+
+            if (!authenticated) {
+
+                window.location.replace("login.html");
+
+                return;
+            }
+
+            document.body.style.visibility = "visible";
+
+        })();
+    </script>
+
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="header">
+
+        <div>
+
+            <h1>TaskFlow</h1>
+
+            <p>Task & Project Management</p>
+
+        </div>
+
+
+        <div class="header-right">
+
+            <span id="apiStatus" class="status">
+                Checking API...
+            </span>
+
+            <button
+                id="logoutButton"
+                class="logout-btn"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="container">
+
+
+        <!-- ================= WELCOME ================= -->
+
+        <section class="welcome">
+
+            <h2 id="welcomeUser">
+                Welcome to TaskFlow 👋
+            </h2>
+
+            <p>
+                Manage your projects and tasks from one place.
+            </p>
+
+        </section>
+
+
+        <!-- ================= STATISTICS ================= -->
+
+        <section class="stats">
+
+            <div class="stat-card">
+
+                <span>Projects</span>
+
+                <strong id="projectCount">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>Tasks</span>
+
+                <strong id="taskCount">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>Pending</span>
+
+                <strong id="pendingCount">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>Completed</span>
+
+                <strong id="completedCount">
+                    0
+                </strong>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= CREATE PROJECT ================= -->
+
+        <section class="form-card">
+
+            <h2>➕ Create Project</h2>
+
+
+            <form id="projectForm">
+
+                <div class="form-group">
+
+                    <label for="projectName">
+                        Project Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="projectName"
+                        placeholder="Enter project name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="projectDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="projectDescription"
+                        placeholder="Enter project description"
+                    ></textarea>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="primary-btn"
+                >
+                    Create Project
+                </button>
+
+            </form>
+
+
+            <p id="projectMessage"></p>
+
+        </section>
+
+
+        <!-- ================= PROJECT SEARCH ================= -->
+
+        <section class="list-card">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>📁 Projects</h2>
+
+                    <p>
+                        Manage your TaskFlow projects
+                    </p>
+
+                </div>
+
+
+                <button
+                    onclick="loadProjects()"
+                    class="refresh-btn"
+                >
+                    🔄 Refresh
+                </button>
+
+            </div>
+
+
+            <div class="filter-row">
+
+                <input
+                    type="text"
+                    id="projectSearch"
+                    placeholder="🔎 Search projects..."
+                >
+
+            </div>
+
+
+            <div id="projectsList">
+                Loading projects...
+            </div>
+
+        </section>
+
+
+        <!-- ================= CREATE TASK ================= -->
+
+        <section class="form-card">
+
+            <h2>➕ Create Task</h2>
+
+
+            <form id="taskForm">
+
+                <div class="form-group">
+
+                    <label for="taskTitle">
+                        Task Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="taskTitle"
+                        placeholder="Enter task title"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="taskDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="taskDescription"
+                        placeholder="Enter task description"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-row">
+
+
+                    <div class="form-group">
+
+                        <label for="taskProject">
+                            Project
+                        </label>
+
+                        <select
+                            id="taskProject"
+                            required
+                        >
+
+                            <option value="">
+                                Select Project
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="taskStatus">
+                            Status
+                        </label>
+
+                        <select id="taskStatus">
+
+                            <option value="Pending">
+                                Pending
+                            </option>
+
+                            <option value="In Progress">
+                                In Progress
+                            </option>
+
+                            <option value="Completed">
+                                Completed
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="taskPriority">
+                            Priority
+                        </label>
+
+                        <select id="taskPriority">
+
+                            <option value="Low">
+                                Low
+                            </option>
+
+                            <option
+                                value="Medium"
+                                selected
+                            >
+                                Medium
+                            </option>
+
+                            <option value="High">
+                                High
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="assignedUser">
+                        Assign User ID
+                    </label>
+
+                    <input
+                        type="number"
+                        id="assignedUser"
+                        placeholder="Example: 1"
+                        min="1"
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="primary-btn"
+                >
+                    Create Task
+                </button>
+
+            </form>
+
+
+            <p id="taskMessage"></p>
+
+        </section>
+
+
+        <!-- ================= TASKS ================= -->
+
+        <section class="list-card">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>📋 Tasks</h2>
+
+                    <p>
+                        Manage your project tasks
+                    </p>
+
+                </div>
+
+
+                <button
+                    onclick="loadTasks()"
+                    class="refresh-btn"
+                >
+                    🔄 Refresh
+                </button>
+
+            </div>
+
+
+            <!-- TASK FILTERS -->
+
+            <div class="filter-row">
+
+                <input
+                    type="text"
+                    id="taskSearch"
+                    placeholder="🔎 Search tasks..."
+                >
+
+
+                <select id="statusFilter">
+
+                    <option value="">
+                        All Status
+                    </option>
+
+                    <option value="Pending">
+                        Pending
+                    </option>
+
+                    <option value="In Progress">
+                        In Progress
+                    </option>
+
+                    <option value="Completed">
+                        Completed
+                    </option>
+
+                </select>
+
+
+                <select id="priorityFilter">
+
+                    <option value="">
+                        All Priority
+                    </option>
+
+                    <option value="Low">
+                        Low
+                    </option>
+
+                    <option value="Medium">
+                        Medium
+                    </option>
+
+                    <option value="High">
+                        High
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div id="tasksList">
+                Loading tasks...
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ================= PROJECT EDIT MODAL ================= -->
+
+    <div
+        id="projectModal"
+        class="modal"
+    >
+
+        <div class="modal-content">
+
+            <h2>✏️ Edit Project</h2>
+
+
+            <form id="projectEditForm">
+
+                <input
+                    type="hidden"
+                    id="editProjectId"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="editProjectName">
+                        Project Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editProjectName"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editProjectDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="editProjectDescription"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="modal-buttons">
+
+                    <button
+                        type="submit"
+                        class="primary-btn"
+                    >
+                        Save Changes
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="cancel-btn"
+                        onclick="closeProjectModal()"
+                    >
+                        Cancel
+                    </button>
+
+                </div>
+
+            </form>
+
+
+            <p id="projectEditMessage"></p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= TASK EDIT MODAL ================= -->
+
+    <div
+        id="taskModal"
+        class="modal"
+    >
+
+        <div class="modal-content">
+
+            <h2>✏️ Edit Task</h2>
+
+
+            <form id="taskEditForm">
+
+                <input
+                    type="hidden"
+                    id="editTaskId"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="editTaskTitle">
+                        Task Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editTaskTitle"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editTaskDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="editTaskDescription"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-row">
+
+
+                    <div class="form-group">
+
+                        <label for="editTaskStatus">
+                            Status
+                        </label>
+
+                        <select id="editTaskStatus">
+
+                            <option value="Pending">
+                                Pending
+                            </option>
+
+                            <option value="In Progress">
+                                In Progress
+                            </option>
+
+                            <option value="Completed">
+                                Completed
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="editTaskPriority">
+                            Priority
+                        </label>
+
+                        <select id="editTaskPriority">
+
+                            <option value="Low">
+                                Low
+                            </option>
+
+                            <option value="Medium">
+                                Medium
+                            </option>
+
+                            <option value="High">
+                                High
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editAssignedUser">
+                        Assigned User ID
+                    </label>
+
+                    <input
+                        type="number"
+                        id="editAssignedUser"
+                        min="1"
+                    >
+
+                </div>
+
+
+                <div class="modal-buttons">
+
+                    <button
+                        type="submit"
+                        class="primary-btn"
+                    >
+                        Save Changes
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="cancel-btn"
+                        onclick="closeTaskModal()"
+                    >
+                        Cancel
+                    </button>
+
+                </div>
+
+            </form>
+
+
+            <p id="taskEditMessage"></p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer>
+
+        TaskFlow API • FastAPI + SQLite
+
+    </footer>
+
+
+    <!-- ================= JAVASCRIPT ================= -->
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
