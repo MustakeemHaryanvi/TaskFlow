@@ -2,7 +2,7 @@
 // TASKFLOW - COMPLETE FRONTEND JAVASCRIPT
 // =========================================================
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://taskflow-1-wyhg.onrender.com";
 
 
 // =========================================================
